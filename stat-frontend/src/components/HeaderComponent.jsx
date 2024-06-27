@@ -8,7 +8,7 @@ const HeaderComponent = ({ adminIN }) => {
   return (
     <header className="header">
       <div className="user-info">
-        <span>Ласкаво просимо, {adminIN}!</span>
+        <span>Львівськи державний університет безпеки життєдіяльності</span>
         <button id="logout-button" onClick={handleLogout}>Вихід</button>
       </div>
     </header>

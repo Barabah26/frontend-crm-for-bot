@@ -1,14 +1,19 @@
+import { BrowserRouter, Routes, Route} from 'react-router-dom';
 import './App.css'
 import HeaderComponent from './components/HeaderComponent'
 import ListStatementComponent from './components/ListStatementComponent'
 
 function App() {
-  const adminIN = "Admin Name";
 
   return (
     <>
-      <HeaderComponent adminIN={adminIN} />
-      <ListStatementComponent/>
+      <BrowserRouter>
+        <HeaderComponent/>
+          <Routes>
+            <Route path='/' element = {<ListStatementComponent/>}></Route>
+            <Route path='/statements' element = {  <ListStatementComponent/> }></Route>
+          </Routes>
+      </BrowserRouter>
     </>
   )
 }
