@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import HeaderComponent from './components/HeaderComponent';
 import ListStatementComponent from './components/ListStatementComponent';
 import LoginPage from './components/LoginPage';
+import PrivateRoute from './components/PrivateRoute'; // Імпортуйте PrivateRoute
 
 function App() {
   return (
@@ -13,10 +14,10 @@ function App() {
           <Route
             path="/statements"
             element={
-              <>
+              <PrivateRoute>
                 <HeaderComponent />
                 <ListStatementComponent />
-              </>
+              </PrivateRoute>
             }
           />
         </Routes>
@@ -26,4 +27,3 @@ function App() {
 }
 
 export default App;
-  
