@@ -1,14 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const HeaderComponent = ({ adminIN }) => {
+const HeaderComponent = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Будь-яка додаткова логіка при виході, якщо потрібно
-    // Наприклад, очищення токенів, сесій тощо
-
-    navigate('/'); // Перенаправлення на сторінку входу
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    navigate('/');
   };
 
   return (
