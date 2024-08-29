@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { listStatement } from '../service/StatementService';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
 import '../App.css'; 
 
 const ListStatementComponent = () => {
   const [statements, setStatements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Initialize useNavigate hook
 
   useEffect(() => {
     fetchStatements();
@@ -36,7 +38,14 @@ const ListStatementComponent = () => {
           setStatements(statements.filter(statement => statement.id !== id));
         })
         .catch(error => {
-          console.error('Failed to mark statement as ready:', error);
+          if (error.response && error.response.status === 401) {
+            console.error('Token expired or invalid. Redirecting to login.');
+            localStorage.removeItem('accessToken'); // Clear expired token
+            localStorage.removeItem('refreshToken'); // Clear refresh token if needed
+            navigate('/login'); // Redirect to login page
+          } else {
+            console.error('Failed to mark statement as ready:', error);
+          }
         });
     }
   };
@@ -56,6 +65,7 @@ const ListStatementComponent = () => {
             <th>Рік набору</th>
             <th>Номер телефону</th>
             <th>Тип заявки</th>
+            <th>Факультет</th>
             <th></th>
           </tr>
         </thead>
@@ -66,7 +76,8 @@ const ListStatementComponent = () => {
               <td>{student.groupName}</td>
               <td>{student.yearEntry}</td>
               <td>{student.phoneNumber}</td>
-              <td>{student.statement}</td>
+              <td>{student.typeOfStatement}</td>
+              <td>{student.institute}</td>
               <td>
                 <button type="button" onClick={() => handleReady(student.id)}>Готово</button>
               </td>

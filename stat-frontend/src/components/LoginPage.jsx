@@ -21,13 +21,25 @@ function LoginPage() {
       const response = await login(username, password);
       console.log('Login successful:', response);
 
+      // Store tokens and user role
       localStorage.setItem('accessToken', response.accessToken);
       localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('userRole', response.role);
 
-      navigate('/statements');
+      // Debugging
+      console.log('User role from localStorage:', localStorage.getItem('userRole'));
+
+      // Redirect based on user role
+      if (response.role === 'ADMIN') {
+        console.log('Redirecting to /super-admin');
+        navigate('/admin');
+      } else {
+        console.log('Redirecting to /statements');
+        navigate('/statements');
+      }
     } catch (error) {
-      console.error('Login failed:', error.response ? error.response.data : error.message);
-      setError('Invalid username or password.');
+      console.error('Login failed:', error.message);
+      setError('Invalid login or password.');
     }
   };
 
@@ -36,8 +48,22 @@ function LoginPage() {
       <div className="login-box border rounded-lg p-4">
         <MDBContainer className="p-3">
           <h2 className="mb-4 text-center">Авторизація користувача</h2>
-          <MDBInput wrapperClass='mb-4' placeholder='Прізвище' id='email' value={username} type='email' onChange={(e) => setUsername(e.target.value)} />
-          <MDBInput wrapperClass='mb-4' placeholder='Пароль' id='password' type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
+          <MDBInput 
+            wrapperClass='mb-4' 
+            placeholder='Прізвище' 
+            id='login' 
+            value={username} 
+            type='text' 
+            onChange={(e) => setUsername(e.target.value)} 
+          />
+          <MDBInput 
+            wrapperClass='mb-4' 
+            placeholder='Пароль' 
+            id='password' 
+            type='password' 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+          />
           {error && <p className="text-danger">{error}</p>}
           <button className="btn-login mb-4 d-block btn-primary" onClick={handleLogin}>Увійти в систему</button>
         </MDBContainer>
