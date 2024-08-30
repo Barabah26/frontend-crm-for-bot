@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'; // Ensure this file is correctly loaded
+import { useNavigate } from 'react-router-dom';
 
 const SuperAdminPage = () => {
   const [users, setUsers] = useState([]);
   const [newUser, setNewUser] = useState({
-    userName: '',
-    email: '',
-    password: ''
+    username: '',
+    password: '',
+    roles: [] 
   });
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUsers();
@@ -20,53 +20,96 @@ const SuperAdminPage = () => {
 
   const fetchUsers = async () => {
     try {
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get('http://localhost:9000/api/admin/allUsers', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Fetched users:', response.data);
       setUsers(response.data);
     } catch (error) {
-      setError('Failed to fetch users');
+      if (error.response && error.response.status === 401) {
+        console.error('Token expired or invalid. Redirecting to login.');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      } else {
+        setError('Failed to fetch users');
+      }
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewUser({ ...newUser, [name]: value });
+    setNewUser(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleRolesChange = (e) => {
+    const { value } = e.target;
+    setNewUser(prevState => ({
+      ...prevState,
+      roles: value.split(',').map(role => role.trim())
+    }));
   };
 
   const handleRegisterUser = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('accessToken');
       await axios.post('http://localhost:9000/api/admin/register', newUser, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setSuccessMessage('User registered successfully');
-      setNewUser({ userName: '', email: '', password: '' });
-      fetchUsers(); // Refresh the user list
+      setNewUser({ username: '', password: '', roles: [] });
+      fetchUsers();
     } catch (error) {
-      setError(error.response?.data || 'Registration failed');
-    }
-  };
-
-  const handleDeleteUser = async () => {
-    if (selectedUser) {
-      try {
-        await axios.delete(`http://localhost:9000/api/admin/delete/${selectedUser}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-        });
-        setSuccessMessage('User deleted successfully');
-        setSelectedUser(null); // Close modal
-        fetchUsers(); // Refresh the user list
-      } catch (error) {
-        setError('Failed to delete user');
+      if (error.response && error.response.status === 401) {
+        console.error('Token expired or invalid. Redirecting to login.');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      } else if (error.response && error.response.status === 409) {
+        setError('Такий користвач вже існує');
+      } else {
+        setError(error.response?.data || 'Registration failed');
       }
     }
   };
 
-  const openDeleteModal = (userId) => {
-    setSelectedUser(userId);
-    const deleteModal = new window.bootstrap.Modal(document.getElementById('deleteModal'));
-    deleteModal.show();
+  const handleDeleteUser = (username) => {
+    console.log('Deleting user with username:', username);
+
+    if (!username) {
+      console.error('Invalid username');
+      return;
+    }
+
+    const confirmAction = window.confirm("Ви впевнені що хочете видалити цього користувача?");
+    if (confirmAction) {
+      const token = localStorage.getItem('accessToken');
+      axios.delete(`http://localhost:9000/api/admin/deleteByUsername/${username}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => {
+        console.log('User deleted successfully:', response.data);
+        setUsers(users.filter(user => user.username !== username));
+      })
+      .catch(error => {
+        if (error.response && error.response.status === 401) {
+          console.error('Token expired or invalid. Redirecting to login.');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          navigate('/login');
+        } else {
+          console.error('Failed to delete user:', error);
+          setError('Failed to delete user');
+        }
+      });
+    }
   };
 
   return (
@@ -80,21 +123,10 @@ const SuperAdminPage = () => {
           <div className="mb-3">
             <input
               type="text"
-              name="userName"
+              name="username"
               className="form-control"
               placeholder="Username"
-              value={newUser.userName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <input
-              type="email"
-              name="email"
-              className="form-control"
-              placeholder="Email"
-              value={newUser.email}
+              value={newUser.username}
               onChange={handleInputChange}
               required
             />
@@ -110,6 +142,17 @@ const SuperAdminPage = () => {
               required
             />
           </div>
+          <div className="mb-3">
+            <input
+              type="text"
+              name="roles"
+              className="form-control"
+              placeholder="Roles"
+              value={newUser.roles.join(', ')} 
+              onChange={handleRolesChange}
+              required
+            />
+          </div>
           <button type="submit" className="btn btn-primary">Register User</button>
         </form>
       </div>
@@ -120,47 +163,26 @@ const SuperAdminPage = () => {
           <tr>
             <th>Username</th>
             <th>Password</th>
-            <th>Role</th>
+            <th>Roles</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id}>
+            <tr key={user.username}>
               <td>{user.username}</td>
               <td>{user.password}</td>
-              <td>{user.roles}</td>
+              <td>{user.roles.join(', ')}</td>
               <td>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => openDeleteModal(user.id)} // Ensure this matches backend ID
-                >
-                  Delete
-                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => {
+                  console.log('User Username:', user.username);
+                  handleDeleteUser(user.username);
+                }}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-      {/* Delete Confirmation Modal */}
-      <div className="modal fade" id="deleteModal" tabIndex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div className="modal-body">
-              Are you sure you want to delete this user?
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" className="btn btn-danger" onClick={handleDeleteUser}>Delete</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
