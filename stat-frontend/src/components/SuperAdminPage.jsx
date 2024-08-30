@@ -71,7 +71,9 @@ const SuperAdminPage = () => {
         localStorage.removeItem('refreshToken');
         navigate('/login');
       } else if (error.response && error.response.status === 409) {
-        setError('Такий користвач вже існує');
+        setError('Такий користувач вже існує');
+      } else if (error.response && error.response.status === 404) {
+        setError('Роль може бути: USER або ADMIN');
       } else {
         setError(error.response?.data || 'Registration failed');
       }
@@ -147,7 +149,7 @@ const SuperAdminPage = () => {
               type="text"
               name="roles"
               className="form-control"
-              placeholder="Roles"
+              placeholder="Roles (comma-separated)"
               value={newUser.roles.join(', ')} 
               onChange={handleRolesChange}
               required
