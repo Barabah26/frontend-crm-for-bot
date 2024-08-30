@@ -77,7 +77,7 @@ const ListStatementComponent = () => {
               <td>{student.yearEntry}</td>
               <td>{student.phoneNumber}</td>
               <td>{student.typeOfStatement}</td>
-              <td>{student.institute}</td>
+              <td>{student.faculty}</td>
               <td>
                 <button type="button" onClick={() => handleReady(student.id)}>Готово</button>
               </td>

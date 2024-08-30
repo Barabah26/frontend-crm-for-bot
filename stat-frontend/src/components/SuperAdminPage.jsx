@@ -73,7 +73,7 @@ const SuperAdminPage = () => {
       } else if (error.response && error.response.status === 409) {
         setError('Такий користувач вже існує');
       } else if (error.response && error.response.status === 404) {
-        setError('Роль може бути: USER або ADMIN');
+        setError('Роль може бути: USER або ADMIN  ');
       } else {
         setError(error.response?.data || 'Registration failed');
       }
