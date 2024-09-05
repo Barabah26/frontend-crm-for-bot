@@ -50,7 +50,7 @@ function LoginPage() {
           <h2 className="mb-4 text-center">Авторизація користувача</h2>
           <MDBInput 
             wrapperClass='mb-4' 
-            placeholder='Прізвище' 
+            placeholder='Логін' 
             id='login' 
             value={username} 
             type='text' 
