@@ -189,8 +189,8 @@ const SuperAdminPage = () => {
         <thead>
           <tr>
             <th>Username</th>
-            <th>Password</th>
-            <th>Roles</th>
+            {/* <th>Password</th> */}
+            <th>Role</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -198,7 +198,7 @@ const SuperAdminPage = () => {
           {users.map((user) => (
             <tr key={user.username}>
               <td>{user.username}</td>
-              <td>{user.password}</td>
+              {/* <td>{user.password}</td> */}
               <td>{user.roles.join(', ')}</td>
               <td>
                 <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(user.username)}>Delete</button>
