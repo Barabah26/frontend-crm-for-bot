@@ -1,29 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { listStatement } from '../service/StatementService';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
+import { listStatement } from '../service/StatementService'; // Імпорт функції з сервісу
+import { useNavigate } from 'react-router-dom';
+import { Form, Table, Button, Container, Row, Col } from 'react-bootstrap'; // Імпорт компонентів Bootstrap
 import '../App.css'; 
 
 const ListStatementComponent = () => {
   const [statements, setStatements] = useState([]);
+  const [filteredStatements, setFilteredStatements] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Initialize useNavigate hook
+  const [selectedFaculty, setSelectedFaculty] = useState('');
+  const navigate = useNavigate();
 
+  // Отримуємо всі заявки при завантаженні компонента
   useEffect(() => {
     fetchStatements();
   }, []);
 
+  // Фільтруємо заявки при зміні вибраного факультету або списку заявок
+  useEffect(() => {
+    filterStatements();
+  }, [statements, selectedFaculty]);
+
+  // Функція для отримання списку заявок з сервера
   const fetchStatements = async () => {
     try {
+      // Використання ендпойнту з сервісу для отримання даних
       const response = await listStatement();
       setStatements(response.data);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch statements:', error);
+      console.error('Не вдалося отримати заявки:', error);
       setLoading(false);
     }
   };
 
+  // Функція для фільтрації заявок за факультетами
+  const filterStatements = () => {
+    if (selectedFaculty === '') {
+      setFilteredStatements([]); // Якщо факультет не обрано, не показуємо заявки
+    } else {
+      const filtered = statements.filter(statement => statement.faculty === selectedFaculty);
+      setFilteredStatements(filtered);
+    }
+  };
+
+  // Обробник для позначення заявки як готової
   const handleReady = (id) => {
     const confirmAction = window.confirm("Ви впевнені, що хочете позначити цю заявку як готову?");
     if (confirmAction) {
@@ -39,53 +61,79 @@ const ListStatementComponent = () => {
         })
         .catch(error => {
           if (error.response && error.response.status === 401) {
-            console.error('Token expired or invalid. Redirecting to login.');
-            localStorage.removeItem('accessToken'); // Clear expired token
-            localStorage.removeItem('refreshToken'); // Clear refresh token if needed
-            navigate('/login'); // Redirect to login page
+            console.error('Токен недійсний або протермінований. Перенаправляємо на сторінку логіну.');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            navigate('/login');
           } else {
-            console.error('Failed to mark statement as ready:', error);
+            console.error('Не вдалося позначити заявку як готову:', error);
           }
         });
     }
   };
 
+  // Обробник зміни вибраного факультету
+  const handleFacultyChange = (e) => {
+    setSelectedFaculty(e.target.value);
+  };
+
+  // Якщо дані ще завантажуються
   if (loading) {
-    return <p>Loading...</p>;
+    return <p>Завантаження...</p>;
   }
 
   return (
-    <div className="students-container">
-      <h2>Список студентів</h2>
-      <table className="students-table">
-        <thead>
-          <tr>
-            <th>ПІБ</th>
-            <th>Група</th>
-            <th>Рік набору</th>
-            <th>Номер телефону</th>
-            <th>Тип заявки</th>
-            <th>Факультет</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {statements.map(student => (
-            <tr key={student.id}>
-              <td>{student.fullName}</td>
-              <td>{student.groupName}</td>
-              <td>{student.yearEntry}</td>
-              <td>{student.phoneNumber}</td>
-              <td>{student.typeOfStatement}</td>
-              <td>{student.faculty}</td>
-              <td>
-                <button type="button" onClick={() => handleReady(student.id)}>Готово</button>
-              </td>
+    <Container className="students-container">
+      <h2 className="my-4">Список студентів</h2>
+      
+      {/* Фільтр факультетів */}
+      <Row className="mb-3">
+        <Col md={6}>
+          <Form.Group controlId="facultyFilter">
+            <Form.Label>Оберіть свій факультет:</Form.Label>
+            <Form.Control as="select" value={selectedFaculty} onChange={handleFacultyChange}>
+              <option value="">Оберіть факультет</option> {/* Змінив значення */}
+              <option value="Факультет цивільного захисту">Факультет цивільного захисту</option>
+              <option value="Факультет пожежної та техногенної безпеки">Факультет пожежної та техногенної безпеки</option>
+              <option value="Факультет психології і соціального захисту">Факультет психології і соціального захисту</option>
+              {/* Додати більше факультетів за необхідності */}
+            </Form.Control>
+          </Form.Group>
+        </Col>
+      </Row>
+
+      {/* Таблиця студентів */}
+      {selectedFaculty !== '' && (
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>ПІБ</th>
+              <th>Група</th>
+              <th>Рік набору</th>
+              <th>Номер телефону</th>
+              <th>Тип заявки</th>
+              <th>Факультет</th>
+              <th>Дія</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {filteredStatements.map(student => (
+              <tr key={student.id}>
+                <td>{student.fullName}</td>
+                <td>{student.groupName}</td>
+                <td>{student.yearEntry}</td>
+                <td>{student.phoneNumber}</td>
+                <td>{student.typeOfStatement}</td>
+                <td>{student.faculty}</td>
+                <td>
+                  <Button variant="success" onClick={() => handleReady(student.id)}>Готово</Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </Container>
   );
 };
 
