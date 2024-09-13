@@ -8,7 +8,7 @@ const SuperAdminPage = () => {
   const [newUser, setNewUser] = useState({
     username: '',
     password: '',
-    roles: [] // Масив ролей
+    roles: [] 
   });
   const [editingUser, setEditingUser] = useState(null);
   const [newPassword, setNewPassword] = useState('');

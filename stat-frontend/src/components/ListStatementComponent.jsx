@@ -92,7 +92,7 @@ const ListStatementComponent = () => {
           <Form.Group controlId="facultyFilter">
             <Form.Label>Оберіть свій факультет:</Form.Label>
             <Form.Control as="select" value={selectedFaculty} onChange={handleFacultyChange}>
-              <option value="">Оберіть факультет</option> {/* Змінив значення */}
+              <option value="">Оберіть факультет</option> 
               <option value="Факультет цивільного захисту">Факультет цивільного захисту</option>
               <option value="Факультет пожежної та техногенної безпеки">Факультет пожежної та техногенної безпеки</option>
               <option value="Факультет психології і соціального захисту">Факультет психології і соціального захисту</option>
