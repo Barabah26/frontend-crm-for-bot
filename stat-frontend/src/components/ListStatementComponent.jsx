@@ -1,134 +1,85 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { Form, Table, Button, Container, Row, Col } from 'react-bootstrap';
 import '../App.css';
 
 const ListStatementComponent = () => {
-  const [statements, setStatements] = useState([]); // Стан для всіх заявок
-  const [filteredStatements, setFilteredStatements] = useState([]); // Стан для відфільтрованих заявок
-  const [loading, setLoading] = useState(true); // Стан для індикатора завантаження
-  const [selectedFaculty, setSelectedFaculty] = useState(''); // Стан для обраного факультету
-  const [selectedStatus, setSelectedStatus] = useState('PENDING'); // Стан для обраного статусу
-  const navigate = useNavigate(); // Для навігації між маршрутами
+  const [statements, setStatements] = useState([]);
+  const [filteredStatements, setFilteredStatements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedFaculty, setSelectedFaculty] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchStatements(); // Завантаження заявок при монтажі компонента
+    fetchStatements();
   }, []);
 
   useEffect(() => {
-    filterStatements(); // Фільтрація заявок при зміні стану
-  }, [statements, selectedFaculty, selectedStatus]);
+    filterStatements();
+  }, [selectedFaculty, selectedStatus]);
 
   const fetchStatements = async () => {
-    setLoading(true); // Зупинка індикатора завантаження
+    setLoading(true);
+    const token = localStorage.getItem('accessToken');
     try {
-      let data = [];
-      if (selectedFaculty) {
-        data = await fetchStatementsByFaculty(selectedFaculty);
-      } else if (selectedStatus) {
-        data = await fetchStatementsByStatus(selectedStatus);
-      } else {
-        data = await listStatement(); // Якщо не вибрано фільтрів, отримати всі заявки
-      }
-
-      console.log('Отримані дані:', data); // Логування отриманих даних
-      setStatements(data); // Встановлення стану для всіх заявок
+      const response = await axios.get('http://localhost:9000/api/statements', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setStatements(response.data);
+      setFilteredStatements(response.data);
     } catch (error) {
-      console.error('Не вдалося отримати заявки:', error);
+      console.error('Error fetching statements:', error);
     } finally {
-      setLoading(false); // Зупинка індикатора завантаження
+      setLoading(false);
     }
   };
 
-  const fetchStatementsByStatus = async (status) => {
-    const token = localStorage.getItem('accessToken'); // Отримання токена
-    try {
-      const response = await axios.get(`http://localhost:9000/api/statements/status/${status}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Не вдалося отримати заявки за статусом:', error);
-      throw error;
-    }
+  const handleFacultyChange = (e) => {
+    setSelectedFaculty(e.target.value);
   };
 
-  const fetchStatementsByFaculty = async (faculty) => {
-    const token = localStorage.getItem('accessToken'); // Отримання токена
-    try {
-      const response = await axios.get(`http://localhost:9000/api/statements/faculty/${faculty}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Не вдалося отримати заявки за факультетом:', error);
-      throw error;
-    }
+  const handleStatusChange = (e) => {
+    setSelectedStatus(e.target.value);
   };
 
   const filterStatements = () => {
     let filtered = statements;
 
-    // Фільтрація за факультетом
-    if (selectedFaculty) {
-      filtered = filtered.filter(statement => statement.faculty === selectedFaculty);
-    }
-
-    // Фільтрація за статусом (перевірка регістру)
-    if (selectedStatus) {
-      filtered = filtered.filter(statement => 
-        statement.application_status && statement.application_status.toUpperCase() === selectedStatus
+    // Фільтруємо за факультетом
+    if (selectedFaculty !== '') {
+      filtered = filtered.filter(
+        (student) => student.faculty === selectedFaculty
       );
     }
 
-    console.log('Відфільтровані заявки:', filtered); // Логування відфільтрованих даних
-    setFilteredStatements(filtered); // Встановлення стану для відфільтрованих заявок
-  };
-
-  const handleUpdateStatus = async (id, newStatus) => {
-    const confirmAction = window.confirm(`Ви впевнені, що хочете змінити статус на ${newStatus}?`); // Підтвердження зміни статусу
-    if (confirmAction) {
-      const token = localStorage.getItem('accessToken'); // Отримання токена з localStorage
-      try {
-        await axios.put(`http://localhost:9000/api/statements/${id}`, { status: newStatus }, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        fetchStatements(); // Оновлення списку після зміни статусу
-      } catch (error) {
-        if (error.response && error.response.status === 401) {
-          console.error('Токен недійсний або протермінований. Перенаправляємо на сторінку логіну.');
-          localStorage.removeItem('accessToken'); // Видалення токена
-          navigate('/login'); // Перенаправлення на сторінку логіну
-        } else {
-          console.error('Не вдалося змінити статус заявки:', error);
-        }
-      }
+    // Фільтруємо за статусом
+    if (selectedStatus !== '') {
+      filtered = filtered.filter((student) => student.status === selectedStatus);
     }
+
+    setFilteredStatements(filtered);
   };
 
-  const handleFacultyChange = (e) => {
-    setSelectedFaculty(e.target.value); // Оновлення стану для обраного факультету
-    fetchStatements(); // Завантажити заявки після зміни факультету
+  const handleInProgress = (id) => {
+    console.log(`Заявка з ID ${id} позначена як в процесі`);
   };
 
-  const handleStatusChange = (e) => {
-    setSelectedStatus(e.target.value); // Оновлення стану для обраного статусу
-    fetchStatements(); // Завантажити заявки після зміни статусу
+  const handleReady = (id) => {
+    console.log(`Заявка з ID ${id} позначена як готова`);
   };
-
-  if (loading) {
-    return <p>Завантаження...</p>; // Показуємо повідомлення про завантаження
-  }
 
   return (
     <Container className="students-container">
-      <h2 className="my-4">Список заявок</h2>
+      <h2 className="my-4">Список студентів</h2>
 
+      {/* Фільтр факультетів та статусу */}
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group controlId="facultyFilter">
-            <Form.Label>Оберіть факультет:</Form.Label>
+            <Form.Label>Оберіть свій факультет:</Form.Label>
             <Form.Control as="select" value={selectedFaculty} onChange={handleFacultyChange}>
               <option value="">Оберіть факультет</option>
               <option value="Факультет цивільного захисту">Факультет цивільного захисту</option>
@@ -139,17 +90,19 @@ const ListStatementComponent = () => {
         </Col>
         <Col md={6}>
           <Form.Group controlId="statusFilter">
-            <Form.Label>Оберіть статус:</Form.Label>
+            <Form.Label>Оберіть статус заявки:</Form.Label>
             <Form.Control as="select" value={selectedStatus} onChange={handleStatusChange}>
-              <option value="PENDING">Щойно зареєстровані</option>
-              <option value="IN_PROGRESS">В обробці</option>
+              <option value="">Оберіть статус</option>
+              <option value="PENDING">Очікується</option>
+              <option value="IN_PROGRESS">В процесі</option>
               <option value="READY">Готово</option>
             </Form.Control>
           </Form.Group>
         </Col>
       </Row>
 
-      {filteredStatements.length > 0 ? (
+      {/* Таблиця студентів */}
+      {selectedFaculty && selectedStatus && filteredStatements.length > 0 ? (
         <Table striped bordered hover>
           <thead>
             <tr>
@@ -164,21 +117,25 @@ const ListStatementComponent = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredStatements.map(statement => (
-              <tr key={statement.id}>
-                <td>{statement.fullName}</td>
-                <td>{statement.groupName}</td>
-                <td>{statement.yearEntry}</td>
-                <td>{statement.phoneNumber}</td>
-                <td>{statement.typeOfStatement}</td>
-                <td>{statement.faculty}</td>
-                <td>{statement.application_status}</td>
+            {filteredStatements.map((student) => (
+              <tr key={student.id}>
+                <td>{student.fullName}</td>
+                <td>{student.groupName}</td>
+                <td>{student.yearEntry}</td>
+                <td>{student.phoneNumber}</td>
+                <td>{student.typeOfStatement}</td>
+                <td>{student.faculty}</td>
+                <td>{student.status}</td>
                 <td>
-                  {statement.application_status === 'PENDING' && (
-                    <Button variant="warning" onClick={() => handleUpdateStatus(statement.id, 'IN_PROGRESS')}>В обробку</Button>
+                  {student.status === 'PENDING' && (
+                    <Button variant="primary" onClick={() => handleInProgress(student.id)}>
+                      В обробці
+                    </Button>
                   )}
-                  {statement.application_status === 'IN_PROGRESS' && (
-                    <Button variant="success" onClick={() => handleUpdateStatus(statement.id, 'READY')}>Готово</Button>
+                  {student.status === 'IN_PROGRESS' && (
+                    <Button variant="success" onClick={() => handleReady(student.id)}>
+                      Готово
+                    </Button>
                   )}
                 </td>
               </tr>
@@ -186,7 +143,7 @@ const ListStatementComponent = () => {
           </tbody>
         </Table>
       ) : (
-        <p>Заявки не знайдено.</p>
+        selectedFaculty && selectedStatus && <p>Немає заявок для відображення</p>
       )}
     </Container>
   );
