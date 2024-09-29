@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import '../App.css';
+import React, { useEffect, useState } from 'react'; // Включаємо React та хуки
+import axios from 'axios'; // Для роботи з HTTP-запитами
+import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap'; // Імпорт компонентів Bootstrap
+import { useNavigate } from 'react-router-dom'; // Для навігації між сторінками
+import '../App.css'; // Імпорт CSS стилів
 
 const ListStatementComponent = () => {
   const [statements, setStatements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [noResults, setNoResults] = useState(false); // Додати стан для повідомлення про відсутність
-  const [errorMessage, setErrorMessage] = useState(''); // Стан для повідомлення про помилку
+  const [noResults, setNoResults] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const navigate = useNavigate();
 
@@ -32,17 +32,16 @@ const ListStatementComponent = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStatements(response.data);
-      console.log(response.data);
-      setNoResults(response.data.length === 0); // Перевірити, чи не знайдено жодної заявки
-      setErrorMessage(''); // Скидаємо повідомлення про помилку
+      setNoResults(response.data.length === 0);
+      setErrorMessage('');
     } catch (error) {
       if (error.response && error.response.status === 404) {
         console.error('Statements not found for the given parameters:', error);
-        setNoResults(true); // Встановити стан, що довідки не знайдені
-        setErrorMessage('Заявки не знайдено для вказаних параметрів.'); // Повідомлення про 404
+        setNoResults(true);
+        setErrorMessage('Заявки не знайдено для вказаних параметрів.');
       } else {
         console.error('Error fetching statements:', error);
-        setErrorMessage('Виникла помилка при отриманні заявок.'); // Загальне повідомлення про помилку
+        setErrorMessage('Виникла помилка при отриманні заявок.');
       }
     } finally {
       setLoading(false);
@@ -62,7 +61,7 @@ const ListStatementComponent = () => {
   // Mark statement as IN_PROGRESS
   const handleInProgress = async (id) => {
     const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'В обробці'?");
-    if (!confirm) return; // Якщо користувач не підтверджує, виходимо з функції
+    if (!confirm) return;
 
     const token = localStorage.getItem('accessToken');
     try {
@@ -70,7 +69,7 @@ const ListStatementComponent = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log(`Statement with ID ${id} marked as IN_PROGRESS`);
-      fetchStatements(); // Fetch updated data after status change
+      fetchStatements();
     } catch (error) {
       console.error('Error marking statement as IN_PROGRESS:', error);
     }
@@ -79,7 +78,7 @@ const ListStatementComponent = () => {
   // Mark statement as READY
   const handleReady = async (id) => {
     const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'Готово'?");
-    if (!confirm) return; // Якщо користувач не підтверджує, виходимо з функції
+    if (!confirm) return;
 
     const token = localStorage.getItem('accessToken');
     try {
@@ -87,9 +86,31 @@ const ListStatementComponent = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log(`Statement with ID ${id} marked as READY`);
-      fetchStatements(); // Fetch updated data after status change
+      fetchStatements();
     } catch (error) {
       console.error('Error marking statement as READY:', error);
+    }
+  };
+
+  // Delete specific statement if it's READY
+  const handleDeleteIfReady = async (id) => {
+    const confirm = window.confirm("Ви впевнені, що хочете видалити цю заявку?");
+    if (!confirm) return;
+
+    const token = localStorage.getItem('accessToken');
+    try {
+      await axios.delete(`http://localhost:9000/api/statements/ready`, {
+        params: {
+          status: 'READY',
+          faculty: selectedFaculty,
+          statementId: id,
+        },
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log(`Statement with ID ${id} deleted`);
+      fetchStatements();
+    } catch (error) {
+      console.error('Error deleting statement:', error);
     }
   };
 
@@ -129,7 +150,7 @@ const ListStatementComponent = () => {
       ) : (
         <>
           {noResults ? (
-            <p className="text-center">{errorMessage}</p> // Відображення повідомлення про відсутність заявок
+            <p className="text-center">{errorMessage}</p>
           ) : (
             <Table striped bordered hover>
               <thead>
@@ -166,8 +187,8 @@ const ListStatementComponent = () => {
                         </Button>
                       )}
                       {statement.status === 'Готово' && (
-                        <Button variant="secondary" disabled>
-                          Завершено
+                        <Button variant="danger" onClick={() => handleDeleteIfReady(statement.id)}>
+                          Видалити
                         </Button>
                       )}
                     </td>
