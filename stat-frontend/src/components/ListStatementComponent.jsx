@@ -10,6 +10,7 @@ const ListStatementComponent = () => {
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [noResults, setNoResults] = useState(false); // Додати стан для повідомлення про відсутність
+  const [errorMessage, setErrorMessage] = useState(''); // Стан для повідомлення про помилку
 
   const navigate = useNavigate();
 
@@ -31,14 +32,17 @@ const ListStatementComponent = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStatements(response.data);
+      console.log(response.data);
       setNoResults(response.data.length === 0); // Перевірити, чи не знайдено жодної заявки
+      setErrorMessage(''); // Скидаємо повідомлення про помилку
     } catch (error) {
-      if (error.response && error.response.status === 403) {
-        // Handle 404 error (not found)
+      if (error.response && error.response.status === 404) {
         console.error('Statements not found for the given parameters:', error);
         setNoResults(true); // Встановити стан, що довідки не знайдені
+        setErrorMessage('Заявки не знайдено для вказаних параметрів.'); // Повідомлення про 404
       } else {
         console.error('Error fetching statements:', error);
+        setErrorMessage('Виникла помилка при отриманні заявок.'); // Загальне повідомлення про помилку
       }
     } finally {
       setLoading(false);
@@ -57,6 +61,9 @@ const ListStatementComponent = () => {
 
   // Mark statement as IN_PROGRESS
   const handleInProgress = async (id) => {
+    const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'В обробці'?");
+    if (!confirm) return; // Якщо користувач не підтверджує, виходимо з функції
+
     const token = localStorage.getItem('accessToken');
     try {
       await axios.put(`http://localhost:9000/api/statements/${id}/in-progress`, {}, {
@@ -71,6 +78,9 @@ const ListStatementComponent = () => {
 
   // Mark statement as READY
   const handleReady = async (id) => {
+    const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'Готово'?");
+    if (!confirm) return; // Якщо користувач не підтверджує, виходимо з функції
+
     const token = localStorage.getItem('accessToken');
     try {
       await axios.put(`http://localhost:9000/api/statements/${id}/ready`, {}, {
@@ -119,7 +129,7 @@ const ListStatementComponent = () => {
       ) : (
         <>
           {noResults ? (
-            <p className="text-center">Довідок не знайдено за даними критеріями</p> // Повідомлення про відсутність заявок
+            <p className="text-center">{errorMessage}</p> // Відображення повідомлення про відсутність заявок
           ) : (
             <Table striped bordered hover>
               <thead>
@@ -145,14 +155,19 @@ const ListStatementComponent = () => {
                     <td>{statement.faculty}</td>
                     <td>{statement.status}</td>
                     <td>
-                      {statement.status === 'PENDING' && (
+                      {statement.status === 'В очікуванні' && (
                         <Button variant="primary" onClick={() => handleInProgress(statement.id)}>
                           В обробці
                         </Button>
                       )}
-                      {statement.status === 'IN_PROGRESS' && (
+                      {statement.status === 'В процесі' && (
                         <Button variant="success" onClick={() => handleReady(statement.id)}>
                           Готово
+                        </Button>
+                      )}
+                      {statement.status === 'Готово' && (
+                        <Button variant="secondary" disabled>
+                          Завершено
                         </Button>
                       )}
                     </td>
