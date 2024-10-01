@@ -11,7 +11,9 @@ const ListStatementComponent = () => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [noResults, setNoResults] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState(''); // Додано для пошуку
+  const [searchQuery, setSearchQuery] = useState('');
+  const [file, setFile] = useState(null); // Додано для зберігання вибраного файлу
+  const [selectedStatementId, setSelectedStatementId] = useState(null); // Для ідентифікації вибраної заявки
 
   const navigate = useNavigate();
 
@@ -56,7 +58,7 @@ const ListStatementComponent = () => {
   };
 
   const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value); // Оновлюємо стан пошукового запиту
+    setSearchQuery(e.target.value);
   };
 
   const handleInProgress = async (id) => {
@@ -112,7 +114,36 @@ const ListStatementComponent = () => {
     }
   };
 
-  // Фільтруємо заяви на основі пошукового запиту
+  // Функція для обробки вибору файлу
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  // Функція для завантаження файлу
+  const handleFileUpload = async (statementId) => {
+    if (!file) {
+      alert('Будь ласка, виберіть файл для завантаження.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('accessToken');
+    try {
+      const response = await axios.post(`http://localhost:9000/api/files/upload/${statementId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      alert(response.data);
+      fetchStatements(); // Оновити список заявок після завантаження файлу
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
   const filteredStatements = statements.filter(statement =>
     statement.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -181,6 +212,7 @@ const ListStatementComponent = () => {
                   <th>Факультет</th>
                   <th>Статус</th>
                   <th>Дія</th>
+                  <th>Завантажити файл</th> {/* Додано для завантаження файлу */}
                 </tr>
               </thead>
               <tbody>
@@ -194,20 +226,37 @@ const ListStatementComponent = () => {
                     <td>{statement.faculty}</td>
                     <td>{statement.status}</td>
                     <td>
-                      {statement.status === 'В очікуванні' && (
-                        <Button variant="primary" onClick={() => handleInProgress(statement.id)}>
-                          В обробці
-                        </Button>
-                      )}
-                      {statement.status === 'В процесі' && (
-                        <Button variant="success" onClick={() => handleReady(statement.id)}>
-                          Готово
-                        </Button>
-                      )}
                       {statement.status === 'Готово' && (
                         <Button variant="danger" onClick={() => handleDeleteIfReady(statement.id)}>
                           Видалити
                         </Button>
+                      )}
+                      {statement.status === 'В очікуванні' && (
+                        <Button variant="success" onClick={() => handleInProgress(statement.id)}>
+                          В обробці
+                        </Button>
+                      )}
+                      {statement.status === 'В процесі' && (
+                        <Button variant="primary" onClick={() => handleReady(statement.id)}>
+                          Готово
+                        </Button>
+                      )}
+                    </td>
+                    <td>
+                      {statement.status === 'Готово' && ( // Додано для кнопки завантаження файлу
+                        <>
+                          <Form.Group controlId={`fileUpload-${statement.id}`}>
+    <Form.Label>Виберіть файл</Form.Label>
+    <Form.Control 
+        type="file" 
+        onChange={handleFileChange} 
+    />
+</Form.Group>
+
+                          <Button variant="primary" onClick={() => handleFileUpload(statement.id)}>
+                            Завантажити
+                          </Button>
+                        </>
                       )}
                     </td>
                   </tr>
