@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'; // Включаємо React та хуки
-import axios from 'axios'; // Для роботи з HTTP-запитами
-import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap'; // Імпорт компонентів Bootstrap
-import { useNavigate } from 'react-router-dom'; // Для навігації між сторінками
-import '../App.css'; // Імпорт CSS стилів
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import '../App.css';
 
 const ListStatementComponent = () => {
   const [statements, setStatements] = useState([]);
@@ -11,15 +11,14 @@ const ListStatementComponent = () => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [noResults, setNoResults] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Додано для пошуку
 
   const navigate = useNavigate();
 
-  // Fetching statements based on selected filters
   useEffect(() => {
     fetchStatements();
   }, [selectedFaculty, selectedStatus]);
 
-  // Fetch statements from the backend
   const fetchStatements = async () => {
     setLoading(true);
     const token = localStorage.getItem('accessToken');
@@ -48,17 +47,18 @@ const ListStatementComponent = () => {
     }
   };
 
-  // Handle change in selected faculty
   const handleFacultyChange = (e) => {
     setSelectedFaculty(e.target.value);
   };
 
-  // Handle change in selected status
   const handleStatusChange = (e) => {
     setSelectedStatus(e.target.value);
   };
 
-  // Mark statement as IN_PROGRESS
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value); // Оновлюємо стан пошукового запиту
+  };
+
   const handleInProgress = async (id) => {
     const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'В обробці'?");
     if (!confirm) return;
@@ -75,7 +75,6 @@ const ListStatementComponent = () => {
     }
   };
 
-  // Mark statement as READY
   const handleReady = async (id) => {
     const confirm = window.confirm("Ви впевнені, що хочете змінити статус на 'Готово'?");
     if (!confirm) return;
@@ -92,7 +91,6 @@ const ListStatementComponent = () => {
     }
   };
 
-  // Delete specific statement if it's READY
   const handleDeleteIfReady = async (id) => {
     const confirm = window.confirm("Ви впевнені, що хочете видалити цю заявку?");
     if (!confirm) return;
@@ -114,11 +112,31 @@ const ListStatementComponent = () => {
     }
   };
 
+  // Фільтруємо заяви на основі пошукового запиту
+  const filteredStatements = statements.filter(statement =>
+    statement.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Container className="students-container">
       <h2 className="my-4">Список заявок</h2>
 
-      {/* Filters for faculty and status */}
+      {/* Поле для пошуку */}
+      <Row className="mb-3">
+        <Col md={12}>
+          <Form.Group controlId="searchQuery">
+            <Form.Label>Пошук за ПІБ:</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Введіть ПІБ"
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      {/* Фільтри для факультету і статусу */}
       <Row className="mb-3">
         <Col md={6}>
           <Form.Group controlId="facultyFilter">
@@ -144,7 +162,7 @@ const ListStatementComponent = () => {
         </Col>
       </Row>
 
-      {/* Statement Table */}
+      {/* Таблиця заявок */}
       {loading ? (
         <p>Завантаження...</p>
       ) : (
@@ -166,7 +184,7 @@ const ListStatementComponent = () => {
                 </tr>
               </thead>
               <tbody>
-                {statements.map((statement) => (
+                {filteredStatements.map((statement) => (
                   <tr key={statement.id}>
                     <td>{statement.fullName}</td>
                     <td>{statement.groupName}</td>
