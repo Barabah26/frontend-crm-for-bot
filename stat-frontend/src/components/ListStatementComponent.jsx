@@ -137,7 +137,7 @@ const ListStatementComponent = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      alert(response.data);
+      alert("Файл успішно надіслано! Можете видалити заявку");
       fetchStatements(); // Оновити список заявок після завантаження файлу
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -212,7 +212,7 @@ const ListStatementComponent = () => {
                   <th>Факультет</th>
                   <th>Статус</th>
                   <th>Дія</th>
-                  <th>Завантажити файл</th> {/* Додано для завантаження файлу */}
+                  {selectedStatus === 'READY' && <th>Завантажити файл</th>} {/* Додано перевірку на статус перед відображенням колонки завантаження файлу */}
                 </tr>
               </thead>
               <tbody>
@@ -242,21 +242,24 @@ const ListStatementComponent = () => {
                         </Button>
                       )}
                     </td>
+                    {/* Додано перевірку на статус перед відображенням колонки завантаження файлу */}
                     <td>
-                      {statement.status === 'Готово' && ( // Додано для кнопки завантаження файлу
+                      {statement.status === 'Готово' ? (
                         <>
                           <Form.Group controlId={`fileUpload-${statement.id}`}>
-    <Form.Label>Виберіть файл</Form.Label>
-    <Form.Control 
-        type="file" 
-        onChange={handleFileChange} 
-    />
-</Form.Group>
+                            <Form.Label>Виберіть файл</Form.Label>
+                            <Form.Control
+                              type="file"
+                              onChange={handleFileChange}
+                            />
+                          </Form.Group>
 
                           <Button variant="primary" onClick={() => handleFileUpload(statement.id)}>
                             Завантажити
                           </Button>
                         </>
+                      ) : (
+                        <span></span> // або ви можете залишити клітинку порожньою
                       )}
                     </td>
                   </tr>
