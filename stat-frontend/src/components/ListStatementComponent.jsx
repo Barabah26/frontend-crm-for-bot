@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Container, Row, Col, Form } from 'react-bootstrap';
+import { Table, Button, Container, Row, Col, Form, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
@@ -12,8 +12,9 @@ const ListStatementComponent = () => {
   const [noResults, setNoResults] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [file, setFile] = useState(null); // Додано для зберігання вибраного файлу
-  const [selectedStatementId, setSelectedStatementId] = useState(null); // Для ідентифікації вибраної заявки
+  const [file, setFile] = useState(null);
+  const [selectedStatementId, setSelectedStatementId] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(''); // Стан для зберігання успішного повідомлення
 
   const navigate = useNavigate();
 
@@ -114,12 +115,10 @@ const ListStatementComponent = () => {
     }
   };
 
-  // Функція для обробки вибору файлу
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
-  // Функція для завантаження файлу
   const handleFileUpload = async (statementId) => {
     if (!file) {
       alert('Будь ласка, виберіть файл для завантаження.');
@@ -137,10 +136,10 @@ const ListStatementComponent = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      alert("Файл успішно надіслано! Можете видалити заявку");
-      fetchStatements(); // Оновити список заявок після завантаження файлу
+      setSuccessMessage('Файл успішно відправлено! Замініть статус заявки на "ГОТОВО"'); // Встановлюємо повідомлення про успіх
     } catch (error) {
       console.error('Error uploading file:', error);
+      alert('Виникла помилка при завантаженні файлу.'); // Повідомлення про помилку
     }
   };
 
@@ -193,6 +192,13 @@ const ListStatementComponent = () => {
         </Col>
       </Row>
 
+      {/* Повідомлення про успіх */}
+      {successMessage && (
+        <Alert variant="success" onClose={() => setSuccessMessage('')} dismissible>
+          {successMessage}
+        </Alert>
+      )}
+
       {/* Таблиця заявок */}
       {loading ? (
         <p>Завантаження...</p>
@@ -210,9 +216,9 @@ const ListStatementComponent = () => {
                   <th>Номер телефону</th>
                   <th>Тип заявки</th>
                   <th>Факультет</th>
-                  <th>Статус</th>
+                  <th className="wide-column">Статус</th>
                   <th>Дія</th>
-                  {selectedStatus === 'READY' && <th>Завантажити файл</th>} {/* Додано перевірку на статус перед відображенням колонки завантаження файлу */}
+                  {selectedStatus === 'IN_PROGRESS' && <th className="wide-column">Завантажити файл</th>}
                 </tr>
               </thead>
               <tbody>
@@ -226,42 +232,30 @@ const ListStatementComponent = () => {
                     <td>{statement.faculty}</td>
                     <td>{statement.status}</td>
                     <td>
+                      {statement.status === 'В очікуванні' && (
+                        <Button variant="success" onClick={() => handleInProgress(statement.id)}>
+                          В обробку
+                        </Button>
+                      )}
+                      {statement.status === 'В процесі' && (
+                        <Button variant="success" onClick={() => handleReady(statement.id)}>
+                          Готово
+                        </Button>
+                      )}
                       {statement.status === 'Готово' && (
                         <Button variant="danger" onClick={() => handleDeleteIfReady(statement.id)}>
                           Видалити
                         </Button>
                       )}
-                      {statement.status === 'В очікуванні' && (
-                        <Button variant="success" onClick={() => handleInProgress(statement.id)}>
-                          В обробці
-                        </Button>
-                      )}
-                      {statement.status === 'В процесі' && (
-                        <Button variant="primary" onClick={() => handleReady(statement.id)}>
-                          Готово
-                        </Button>
-                      )}
                     </td>
-                    {/* Додано перевірку на статус перед відображенням колонки завантаження файлу */}
-                    <td>
-                      {statement.status === 'Готово' ? (
-                        <>
-                          <Form.Group controlId={`fileUpload-${statement.id}`}>
-                            <Form.Label>Виберіть файл</Form.Label>
-                            <Form.Control
-                              type="file"
-                              onChange={handleFileChange}
-                            />
-                          </Form.Group>
-
-                          <Button variant="primary" onClick={() => handleFileUpload(statement.id)}>
-                            Завантажити
-                          </Button>
-                        </>
-                      ) : (
-                        <span></span> // або ви можете залишити клітинку порожньою
-                      )}
-                    </td>
+                    {statement.status === 'В процесі' && (
+                      <td>
+                        <input type="file" onChange={handleFileChange} />
+                        <Button variant="primary" onClick={() => handleFileUpload(statement.id)}>
+                          Завантажити
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
