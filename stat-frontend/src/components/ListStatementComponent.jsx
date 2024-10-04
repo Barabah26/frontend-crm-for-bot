@@ -212,7 +212,7 @@ const ListStatementComponent = () => {
                 <tr>
                   <th>ПІБ</th>
                   <th>Група</th>
-                  <th>Рік набору</th>
+                  <th>Дата народження</th>
                   <th>Номер телефону</th>
                   <th>Тип заявки</th>
                   <th>Факультет</th>
@@ -226,7 +226,7 @@ const ListStatementComponent = () => {
                   <tr key={statement.id}>
                     <td>{statement.fullName}</td>
                     <td>{statement.groupName}</td>
-                    <td>{statement.yearEntry}</td>
+                    <td>{statement.yearBirthday}</td>
                     <td>{statement.phoneNumber}</td>
                     <td>{statement.typeOfStatement}</td>
                     <td>{statement.faculty}</td>
