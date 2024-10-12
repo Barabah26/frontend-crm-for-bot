@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Button, Container, Row, Col, Form, Alert } from 'react-bootstrap';
+import { Table, Button, Container, Row, Col, Form, Alert, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
@@ -14,13 +14,15 @@ const ListStatementComponent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [file, setFile] = useState(null);
   const [selectedStatementId, setSelectedStatementId] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(''); // Стан для зберігання успішного повідомлення
+  const [successMessage, setSuccessMessage] = useState(''); 
+  const [showModal, setShowModal] = useState(false);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchStatements();
   }, [selectedFaculty, selectedStatus]);
+
 
   const fetchStatements = async () => {
     setLoading(true);
@@ -136,7 +138,7 @@ const ListStatementComponent = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setSuccessMessage('Файл успішно відправлено! Замініть статус заявки на "ГОТОВО"'); // Встановлюємо повідомлення про успіх
+      setShowModal(true);
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Виникла помилка при завантаженні файлу.'); // Повідомлення про помилку
@@ -267,6 +269,18 @@ const ListStatementComponent = () => {
           )}
         </>
       )}
+      {/* Модальне вікно */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Успішне завантаження</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Файл успішно відправлено! Замініть статус заявки на "ГОТОВО"</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Закрити
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };
