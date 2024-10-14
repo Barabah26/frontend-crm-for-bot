@@ -129,104 +129,126 @@ const SuperAdminPage = () => {
         localStorage.removeItem('refreshToken');
         navigate('/login');
       } else {
-        console.error(error.response);
         setError(error.response?.data || 'Failed to update password');
       }
     }
   };
-  
 
   return (
     <div className="container mt-4">
       {error && <div className="alert alert-danger">{error}</div>}
       {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
-      <div className="mb-4">
-        <h2>Зареєструвати нового користувача</h2>
-        <form onSubmit={handleRegisterUser}>
-          <div className="mb-3">
-            <input
-              type="text"
-              name="username"
-              className="form-control"
-              placeholder="Username"
-              value={newUser.username}
-              onChange={handleInputChange}
-              required
-            />
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h2>Зареєструвати нового користувача</h2>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleRegisterUser}>
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    name="username"
+                    className="form-control"
+                    placeholder="Логін"
+                    value={newUser.username}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <input
+                    type="password"
+                    name="password"
+                    className="form-control"
+                    placeholder="Пароль"
+                    value={newUser.password}
+                    onChange={handleInputChange}
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="mb-3">
+                  <select
+                    name="roles"
+                    className="form-select"
+                    multiple
+                    value={newUser.roles}
+                    onChange={handleRoleChange}
+                    required
+                  >
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                </div>
+                <button type="submit" className="btn btn-primary">Зареєструвати користувача</button>
+              </form>
+            </div>
           </div>
-          <div className="mb-3">
-            <input
-              type="password"
-              name="password"
-              className="form-control"
-              placeholder="Password"
-              value={newUser.password}
-              onChange={handleInputChange}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="mb-3">
-            <select
-              name="roles"
-              className="form-control"
-              multiple
-              value={newUser.roles}
-              onChange={handleRoleChange}
-              required
-            >
-              <option value="USER">USER</option>
-              <option value="ADMIN">ADMIN</option>
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary">Register User</button>
-        </form>
+        </div>
       </div>
 
-      <h2>Всі користувачі</h2>
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th>Username</th>
-            {/* <th>Password</th> */}
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.username}>
-              <td>{user.username}</td>
-              {/* <td>{user.password}</td> */}
-              <td>{user.roles.join(', ')}</td>
-              <td>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(user.username)}>Delete</button>
-                <button className="btn btn-warning btn-sm ms-2" onClick={() => handleEditPassword(user)}>Edit Password</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h2>Всі користувачі</h2>
+            </div>
+            <div className="card-body">
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Логін</th>
+                    <th>Роль</th>
+                    <th>Дія</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.username}>
+                      <td>{user.username}</td>
+                      <td>{user.roles.join(', ')}</td>
+                      <td>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(user.username)}>Видалити</button>
+                        <button className="btn btn-warning btn-sm ms-2" onClick={() => handleEditPassword(user)}>Змінити пароль</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {editingUser && (
-        <div className="mt-4">
-          <h2>Редагувати пароль для {editingUser.username}</h2>
-          <form onSubmit={(e) => { e.preventDefault(); handleSavePassword(); }}>
-            <div className="mb-3">
-              <input
-                type="password"
-                className="form-control"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-              />
+        <div className="row mb-4">
+          <div className="col-12">
+            <div className="card">
+              <div className="card-header">
+                <h2>Редагувати пароль для {editingUser.username}</h2>
+              </div>
+              <div className="card-body">
+                <form onSubmit={(e) => { e.preventDefault(); handleSavePassword(); }}>
+                  <div className="mb-3">
+                    <input
+                      type="password"
+                      className="form-control"
+                      placeholder="Новий пароль"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-success">Зберегти пароль</button>
+                  <button type="button" className="btn btn-secondary ms-2" onClick={() => setEditingUser(null)}>Скасувати</button>
+                </form>
+              </div>
             </div>
-            <button type="submit" className="btn btn-success">Save Password</button>
-            <button type="button" className="btn btn-secondary ms-2" onClick={() => setEditingUser(null)}>Cancel</button>
-          </form>
+          </div>
         </div>
       )}
     </div>
