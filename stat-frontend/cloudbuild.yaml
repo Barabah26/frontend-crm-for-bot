@@ -26,5 +26,5 @@ options:
 images: [gcr.io/$PROJECT_ID/$_SERVICE_NAME:$COMMIT_SHA]
 
 substitutions:
-  _SERVICE_NAME: frontend-cicd
+  _SERVICE_NAME: front-cicd
   _DEPLOY_REGION: us-central1
