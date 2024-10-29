@@ -1,20 +1,23 @@
-# Use official Node.js 20 image
-FROM node:20
+# Встановлення Node.js для побудови та запуску додатка
+FROM node:18
 
-# Set the working directory inside the container
+# Встановлюємо робочу директорію
 WORKDIR /app
 
-# Copy the package.json and package-lock.json (if present)
+# Копіюємо package.json і package-lock.json для встановлення залежностей
 COPY package*.json ./
 
-# Install the dependencies
+# Встановлюємо залежності
 RUN npm install
 
-# Copy the remaining application files
+# Копіюємо весь код у контейнер
 COPY . .
 
-# Expose port 3000
-EXPOSE 3000
+# Будуємо додаток
+RUN npm run build
 
-# Run the application in development mode
-CMD ["npm", "run", "dev"]
+# Відкриваємо порт 3001 всередині контейнера
+EXPOSE 3001
+
+# Запускаємо Vite-сервер на порті 3001
+CMD ["npm", "run", "preview", "--", "--port", "3001", "--host"]
